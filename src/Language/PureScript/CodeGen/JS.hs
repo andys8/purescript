@@ -9,11 +9,11 @@ module Language.PureScript.CodeGen.JS
 import Prelude.Compat
 import Protolude (ordNub)
 
-import Control.Arrow ((&&&))
 import Control.Monad (forM, replicateM, void)
 import Control.Monad.Except (MonadError, throwError)
 import Control.Monad.Reader (MonadReader, asks)
 import Control.Monad.Supply.Class
+import Control.Arrow ((&&&))
 
 import Data.List ((\\), intersect)
 import qualified Data.Foldable as F
@@ -71,12 +71,15 @@ moduleToJs (Module _ coms mn _ imps exps reExps foreigns decls) foreignInclude =
     let moduleBody = header : foreign' ++ jsImports ++ concat optimized
     let foreignExps = exps `intersect` foreigns
     let standardExps = exps \\ foreignExps
-    let reExps' = M.toList (M.withoutKeys reExps (S.fromList C.primModules))
-    let exps' = AST.ObjectLiteral Nothing $ map (mkString . runIdent &&& AST.Var Nothing . identToJs) standardExps
-                               ++ map (mkString . runIdent &&& foreignIdent) foreignExps
-                               ++ concatMap (reExportPairs mnLookup) reExps'
-    return $ moduleBody ++ [AST.Assignment Nothing (accessorString "exports" (AST.Var Nothing "module")) exps']
+    -- let reExps' = M.toList (M.withoutKeys reExps (S.fromList C.primModules))
+    -- let exps' = AST.ObjectLiteral Nothing $ map (mkString . runIdent &&& AST.Var Nothing . identToJs) standardExps
+    --                           ++ map (mkString . runIdent &&& foreignIdent) foreignExps
+    --                           ++ concatMap (reExportPairs mnLookup) reExps'
+    -- return $ moduleBody ++ [AST.Assignment Nothing (accessorString "exports" (AST.Var Nothing "module")) exps']
 
+    return $ moduleBody ++ [ AST.Export Nothing (map runIdent foreignExps) foreignInclude
+                           , AST.Export Nothing (map runIdent standardExps) Nothing
+                           ]
   where
 
   -- | Extracts all declaration names from a binding group.
