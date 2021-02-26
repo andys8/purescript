@@ -201,10 +201,10 @@ moduleToJs (Module _ coms mn _ imps exps reExps foreigns decls) foreignInclude =
   -- | Generate code in the simplified JavaScript intermediate representation for an accessor based on
   -- a PureScript identifier. If the name is not valid in JavaScript (symbol based, reserved name) an
   -- indexer is returned.
-  moduleAccessor :: Ident -> AST -> AST
-  moduleAccessor (Ident prop) = moduleAccessorString prop
-  moduleAccessor (GenIdent _ _) = internalError "GenIdent in moduleAccessor"
-  moduleAccessor UnusedIdent = internalError "UnusedIdent in moduleAccessor"
+  accessor :: Ident -> AST -> AST
+  accessor (Ident prop) = accessorString $ mkString prop
+  accessor (GenIdent _ _) = internalError "GenIdent in accessor"
+  accessor UnusedIdent = internalError "UnusedIdent in accessor"
 
   moduleAccessorString :: Text -> AST -> AST
   moduleAccessorString = accessorString . mkString . T.replace "'" "$prime"
@@ -337,7 +337,7 @@ moduleToJs (Module _ coms mn _ imps exps reExps foreigns decls) foreignInclude =
   -- variable that may have a qualified name.
   qualifiedToJS :: (a -> Ident) -> Qualified a -> AST
   qualifiedToJS f (Qualified (Just C.Prim) a) = AST.Var Nothing . runIdent $ f a
-  qualifiedToJS f (Qualified (Just mn') a) | mn /= mn' = moduleAccessor (f a) (AST.Var Nothing (moduleNameToJs mn'))
+  qualifiedToJS f (Qualified (Just mn') a) | mn /= mn' = accessor (f a) (AST.Var Nothing (moduleNameToJs mn'))
   qualifiedToJS f (Qualified _ a) = AST.Var Nothing $ identToJs (f a)
 
   foreignIdent :: Ident -> AST
